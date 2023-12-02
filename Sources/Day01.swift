@@ -2,19 +2,19 @@ import Algorithms
 import Foundation
 
 extension String {
- func parseToInt() -> String {
-     self.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
- }
+    fileprivate func parseToInt() -> String {
+        self.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+    }
 }
 
 struct Day01: AdventDay {
     // Save your data in a corresponding text file in the `Data` directory.
     var data: String
-
+    
     var entities: [String] {
         data.split(separator: "\n").map { String($0) }
     }
-
+    
     func part1() -> Any {
         var coordinateValue = 0
         var currentLineValue: String
@@ -27,7 +27,7 @@ struct Day01: AdventDay {
     }
     
     func part2() -> Any {
-            
+        
         var coordinateValue = 0
         
         var currentLineValue: String
@@ -85,7 +85,7 @@ struct Day01: AdventDay {
         return coordinateValue
     }
     
-    func checkIfNumberString(lineString: String) -> Optional<String> {
+    func checkIfNumberString(lineString: String) -> String? {
         if lineString.contains("one") {
             return "1"
         } else if lineString.contains("two") {
