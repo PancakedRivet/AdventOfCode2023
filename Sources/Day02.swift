@@ -28,13 +28,14 @@ struct Day02: AdventDay {
             winningGame = true
             
             // Get the Game Id from the line
-            let range = line.firstIndex(of: ":")!
-            gameId = line.dropFirst(5)[..<range].first!.wholeNumberValue!
+            let gameIdStartIdx = line.firstIndex(of: "e")!
+            let gameIdEndIdx = line.firstIndex(of: ":")!
+            gameId = line[gameIdStartIdx..<gameIdEndIdx].dropFirst(2).first!.wholeNumberValue!
             
-            // print("Line:", line)
+//             print("Line:", line, " GameId: ", gameId)
             
             // Break the remaining string into the seperate games for analysis
-            let gameString = line[range...].dropFirst()
+            let gameString = line[gameIdEndIdx...].dropFirst()
             let games = gameString.split(separator: ";")
             
         gameLoop: for game in games {
