@@ -119,5 +119,79 @@ struct Day03: AdventDay {
         return partNumberSum
     }
     
-    
+    func part2() -> Any {
+
+        let DEBUG = false
+        
+        var gearRatioSum: Int = 0
+        
+        // Walk the line until we find a symbol
+        for (idx, line) in entities.enumerated() {
+            if DEBUG {
+                print(idx, line)
+            }
+            
+            var partNumbers: [Int] = []
+            
+            // All characters in the data that are symbols
+            let symbolCharacters = CharacterSet(charactersIn: "*")
+            
+            if CharacterSet(charactersIn: line).isDisjoint(with: symbolCharacters) {
+                // If none of the characters in the line are symbols, move to the next line
+                continue
+            }
+            
+            // Determine where the symbol is
+            for (lineIdx, char) in line.enumerated() {
+                switch char {
+                case "*":
+                    break
+                default:
+                    continue
+                }
+                
+                partNumbers.removeAll()
+                
+                if DEBUG {
+                    print("Symbol:", char)
+                }
+                
+                // Check the same line left and right of the symbol
+                if DEBUG {
+                    print("-Checking same line")
+                }
+                let sameLinePartNumbers = calcPartNumber(line: line, symbolIdx: lineIdx, isDebug: DEBUG)
+                partNumbers.append(contentsOf: sameLinePartNumbers)
+                
+                // Check the line above the symbol if we aren't on the first line
+                if (idx > 0) {
+                    if DEBUG {
+                        print("-Checking previous line")
+                    }
+                    let prevLine = entities[idx - 1]
+                    let prevLinePartNumbers = calcPartNumber(line: prevLine, symbolIdx: lineIdx, isDebug: DEBUG)
+                    partNumbers.append(contentsOf: prevLinePartNumbers)
+                }
+                
+                // Check the line below the symbol if we aren't on the first line
+                if (idx + 1 < entities.count) {
+                    if DEBUG {
+                        print("-Checking next line")
+                    }
+                    let nextLine = entities[idx + 1]
+                    let nextLinePartNumber = calcPartNumber(line: nextLine, symbolIdx: lineIdx, isDebug: DEBUG)
+                    partNumbers.append(contentsOf: nextLinePartNumber)
+                }
+                
+                // If there are only 2 part numbers, calculate the gear ratio and add it to the sum
+                if partNumbers.count == 2 {
+                    if DEBUG {
+                        print("+Gear identified")
+                    }
+                    gearRatioSum += partNumbers.reduce(1, *)
+                }
+            }
+        }
+        return gearRatioSum
+    }
 }
