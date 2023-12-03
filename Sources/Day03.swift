@@ -9,11 +9,11 @@ struct Day03: AdventDay {
         data.split(separator: "\n").map { String($0) }
     }
     
-    func calcPartNumberNew(line: String, symbolIdx: Int, isDebug: Bool = false) -> Int {
+    func calcPartNumber(line: String, symbolIdx: Int, isDebug: Bool = false) -> [Int] {
         
         var doSavePartNumber: Bool = false
         
-        var partNumberSum: Int = 0
+        var partNumbers: [Int] = []
         var partNumber: String = ""
         
         for (lineIdx, lineChar) in line.enumerated() {
@@ -22,7 +22,7 @@ struct Day03: AdventDay {
             if !(lineChar.isASCII && lineChar.isNumber) {
                 if partNumber.count > 0 {
                     if doSavePartNumber {
-                        partNumberSum += Int(partNumber)!
+                        partNumbers.append(Int(partNumber)!)
                         if isDebug {
                             print("--PartNumber:", partNumber)
                         }
@@ -45,14 +45,14 @@ struct Day03: AdventDay {
         // In case we exit the for loop by reaching the end of the line without adding partNumber
         if partNumber.count > 0 {
             if doSavePartNumber {
-                partNumberSum += Int(partNumber)!
+                partNumbers.append(Int(partNumber)!)
                 if isDebug {
                     print("--PartNumber:", partNumber)
                 }
             }
         }
         
-        return partNumberSum
+        return partNumbers
     }
     
     func part1() -> Any {
@@ -91,8 +91,8 @@ struct Day03: AdventDay {
                 if DEBUG {
                     print("-Checking same line")
                 }
-                let prevLinePartNumber = calcPartNumberNew(line: line, symbolIdx: lineIdx, isDebug: DEBUG)
-                partNumberSum += prevLinePartNumber
+                let sameLinePartNumbers = calcPartNumber(line: line, symbolIdx: lineIdx, isDebug: DEBUG)
+                partNumberSum += sameLinePartNumbers.reduce(0, +)
                 
                 // Check the line above the symbol if we aren't on the first line
                 if (idx > 0) {
@@ -100,8 +100,8 @@ struct Day03: AdventDay {
                         print("-Checking previous line")
                     }
                     let prevLine = entities[idx - 1]
-                    let prevLinePartNumber = calcPartNumberNew(line: prevLine, symbolIdx: lineIdx, isDebug: DEBUG)
-                    partNumberSum += prevLinePartNumber
+                    let prevLinePartNumbers = calcPartNumber(line: prevLine, symbolIdx: lineIdx, isDebug: DEBUG)
+                    partNumberSum += prevLinePartNumbers.reduce(0, +)
                 }
                 
                 // Check the line below the symbol if we aren't on the first line
@@ -110,8 +110,8 @@ struct Day03: AdventDay {
                         print("-Checking next line")
                     }
                     let nextLine = entities[idx + 1]
-                    let nextLinePartNumber = calcPartNumberNew(line: nextLine, symbolIdx: lineIdx, isDebug: DEBUG)
-                    partNumberSum += nextLinePartNumber
+                    let nextLinePartNumber = calcPartNumber(line: nextLine, symbolIdx: lineIdx, isDebug: DEBUG)
+                    partNumberSum += nextLinePartNumber.reduce(0, +)
                 }
                 
             }
@@ -119,7 +119,5 @@ struct Day03: AdventDay {
         return partNumberSum
     }
     
-    func part2() -> Any {
-        return 0
-    }
+    
 }
