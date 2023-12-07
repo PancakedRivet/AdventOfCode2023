@@ -9,7 +9,7 @@ struct Day06: AdventDay {
         data.split(separator: "\n").map { String($0) }
     }
     
-    func calculate_distance(timeHoldingButton: Int, total: Int) -> Int {
+    func calculateDistance(timeHoldingButton: Int, total: Int) -> Int {
         let distance = timeHoldingButton * (total - timeHoldingButton)
         return distance
     }
@@ -36,7 +36,7 @@ struct Day06: AdventDay {
             }
             
             for timeTrial in 0...raceTime {
-                let trialDistance = calculate_distance(timeHoldingButton: timeTrial, total: raceTime)
+                let trialDistance = calculateDistance(timeHoldingButton: timeTrial, total: raceTime)
                 
                 if DEBUG {
                     print("Trial Distance:", trialDistance, "With Time:", timeTrial)
@@ -84,7 +84,7 @@ struct Day06: AdventDay {
         var numberOfWins = 0
         
         for timeTrial in 0...raceTime {
-            let trialDistance = calculate_distance(timeHoldingButton: timeTrial, total: raceTime)
+            let trialDistance = calculateDistance(timeHoldingButton: timeTrial, total: raceTime)
             
             if DEBUG {
                 print("Trial Distance:", trialDistance, "With Time:", timeTrial)
