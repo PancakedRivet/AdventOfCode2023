@@ -96,6 +96,7 @@ struct Day05: AdventDay {
             
             print("Searching pair:", idx / 2, "out of", seedLine.count / 2, "Numbers to check:", endingPoint - startingPoint)
 
+            var lowestNumberofGroup = 0
             for seedValue in seedList {
                 var newSeedValue = seedValue
                 for mapName in mapEntryList {
@@ -113,8 +114,16 @@ struct Day05: AdventDay {
                 if newSeedValue < lowestLocationNumber {
                     lowestLocationNumber = newSeedValue
                 }
+                
+                // Get the lowest number of the group for checking
+                if lowestNumberofGroup <= 0 {
+                    lowestNumberofGroup = newSeedValue
+                }
+                if newSeedValue < lowestNumberofGroup {
+                    lowestNumberofGroup = newSeedValue
+                }
             }
-            print("Lowest location number:", lowestLocationNumber)
+            print("Lowest: (group)", lowestNumberofGroup, "(total)", lowestLocationNumber)
         }
         return lowestLocationNumber
     }
