@@ -16,6 +16,7 @@ final class Day08Tests: XCTestCase {
     EEE = (EEE, EEE)
     GGG = (GGG, GGG)
     ZZZ = (ZZZ, ZZZ)
+    ZZZ = (ZZZ, ZZZ)
     """
     
     let testData2 = """
