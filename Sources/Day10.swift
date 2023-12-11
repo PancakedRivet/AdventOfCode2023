@@ -2,16 +2,31 @@ import Algorithms
 import Foundation
 
 enum MapDirection: String {
-    case North
-    case South
-    case East
-    case West
+    case north
+    case south
+    case east
+    case west
+    
+    var opposite: MapDirection {
+        // Used to attach the opposite direction based on from and to directions for PipePiece instances
+        switch self {
+        case .north:
+            return .south
+        case .south:
+            return .north
+        case .east:
+            return .west
+        case .west:
+            return .east
+        }
+    }
 }
 
 struct MapCoordinate {
     var row: Int
     var col: Int
 }
+
 
 struct PipePiece {
     var pipeChar: Character
@@ -21,19 +36,20 @@ struct PipePiece {
 
 struct Day10: AdventDay {
     // Save your data in a corresponding text file in the `Data` directory.
-    var data: String
+    let data: String
+    let entities: [[Character]]
     
-    var entities: [String] {
-        data.split(separator: "\n").map { String($0) }
+    init(data: String) {
+        self.data = data
+        self.entities = data.split(whereSeparator: { $0.isNewline }).map { Array($0) }
     }
     
     func part1() -> Any {
         
-        let DEBUG = true
+        let DEBUG = false
         
         var startingPoint: PipePiece = createStartingPointPipePiece()!
-        
-        startingPoint.headingOfNextPipe = getNextPipePieceDirection(coordinates: startingPoint.coordinates, DEBUG: DEBUG)!
+        startingPoint.headingOfNextPipe = directionForNextPipePiece(startingAt: startingPoint.coordinates, debug: DEBUG)!
         
         if DEBUG {
             print("Starting point:", startingPoint)
@@ -44,7 +60,6 @@ struct Day10: AdventDay {
         var previousPipePiece: PipePiece = startingPoint
         
         while true {
-            
             if DEBUG {
                 print("Loop iter:", loopIteration)
                 print("Prev:", previousPipePiece)
@@ -52,21 +67,18 @@ struct Day10: AdventDay {
             // Each pipe piece that we add to the array is checked for validity so we can just follow the pipe
             let nextPipeDirection = previousPipePiece.headingOfNextPipe
             
-            let nextCoordinates = getNextCoordinatesInDirection(coordinates: previousPipePiece.coordinates, pipeHeading: nextPipeDirection)
+            let nextCoordinates = nextCoordinates(startingAt: previousPipePiece.coordinates, heading: nextPipeDirection)
             
-            let nextPipeChar = getPipeChar(coordinates: nextCoordinates)
+            let nextPipeChar = pipeCharacter(at: nextCoordinates)
             
             if nextPipeChar == "S" {
                 break
             }
             
             // This should always be true
-            if !isPipeCharValid(pipeChar: nextPipeChar, intoDirection: nextPipeDirection) {
-                print("Error occurred finding next pipe piece")
-                break
-            }
+            assert(isPipeCharValid(pipeChar: nextPipeChar, intoDirection: nextPipeDirection), "Error occurred finding next pipe piece")
                 
-            let nextHeadingForNextPipe = getNextMapDirectionForChar(pipeChar: nextPipeChar, nextPipeDirection: nextPipeDirection)!
+            let nextHeadingForNextPipe = nextDirection(approaching: nextPipeChar, heading: nextPipeDirection)!
                     
             let nextPipePiece = PipePiece(pipeChar: nextPipeChar, coordinates: nextCoordinates, headingOfNextPipe: nextHeadingForNextPipe)
                 
@@ -89,73 +101,62 @@ struct Day10: AdventDay {
         return (loopIteration + 1) / 2
     }
     
-    func createStartingPointPipePiece() -> Optional<PipePiece > {
-        
+    func createStartingPointPipePiece() -> PipePiece? {
         for (idx, line) in entities.enumerated() {
            
-//            print("Line:", line)
-            
             // Find the starting point
-            let startingPointIndex = line.firstIndex(of: "S")
-            if startingPointIndex != nil {
-                
-                let index: Int = line.distance(from: line.startIndex, to: startingPointIndex!)
+            if let startingPointIndex = line.firstIndex(of: "S") {
+                let index = line.distance(from: line.startIndex, to: startingPointIndex)
                 
                 let startingPointCoordinates = MapCoordinate(row: idx, col: index)
                 
-                let startingPointNextPipeHeading = getNextPipePieceDirection(coordinates: startingPointCoordinates, DEBUG: false)!
+                let startingPointNextPipeHeading = directionForNextPipePiece(startingAt: startingPointCoordinates, debug: false)!
                 
                 let startingPoint = PipePiece(pipeChar: "S", coordinates: startingPointCoordinates, headingOfNextPipe: startingPointNextPipeHeading)
                 
-                return Optional(startingPoint)
+                return startingPoint
             }
         }
         print("! Starting point not found!")
-        return Optional.none
+        return nil
     }
     
     // Called when every direction needs to be tested (such as with starting point
-    func getNextPipePieceDirection(coordinates: MapCoordinate, DEBUG: Bool) -> Optional<MapDirection> {
-        
-        var nextCoordinates: MapCoordinate
+    func directionForNextPipePiece(startingAt coordinates: MapCoordinate, debug DEBUG: Bool = false) -> Optional<MapDirection> {
         
         // Test pipe in the WEST direction
-        if (coordinates.col != 0) {
+        if coordinates.col != 0 {
+            let nextCoordinates = MapCoordinate(row: coordinates.row, col: coordinates.col - 1)
             
-            nextCoordinates = MapCoordinate(row: coordinates.row, col: coordinates.col - 1)
-            
-            if getNextPipePieceInDirection(nextCoordinates: nextCoordinates, pipeHeading: MapDirection.West, DEBUG: DEBUG) != nil {
-                return MapDirection.West
+            if nextPipePiece(from: nextCoordinates, heading: .west, debug: DEBUG) != nil {
+                return .west
             }
         }
         
         // Test pipes in the EAST direction
-        if (coordinates.col != entities[0].count) {
+        if coordinates.col != entities[0].count {
+            let nextCoordinates = MapCoordinate(row: coordinates.row, col: coordinates.col + 1)
             
-            nextCoordinates = MapCoordinate(row: coordinates.row, col: coordinates.col + 1)
-            
-            if getNextPipePieceInDirection(nextCoordinates: nextCoordinates, pipeHeading: MapDirection.East, DEBUG: DEBUG) != nil {
-                return MapDirection.East
+            if nextPipePiece(from: nextCoordinates, heading: .east, debug: DEBUG) != nil {
+                return .east
             }
         }
         
         // Test pipes in the NORTH direction
         if (coordinates.row != 0) {
+            let nextCoordinates = MapCoordinate(row: coordinates.row - 1, col: coordinates.col)
             
-            nextCoordinates = MapCoordinate(row: coordinates.row - 1, col: coordinates.col)
-            
-            if getNextPipePieceInDirection(nextCoordinates: nextCoordinates, pipeHeading: MapDirection.North, DEBUG: DEBUG) != nil {
-                return MapDirection.North
+            if nextPipePiece(from: nextCoordinates, heading: .north, debug: DEBUG) != nil {
+                return .north
             }
         }
         
         // Test pipes in the SOUTH direction
         if (coordinates.row != entities.count) {
+            let nextCoordinates = MapCoordinate(row: coordinates.row + 1, col: coordinates.col)
             
-            nextCoordinates = MapCoordinate(row: coordinates.row + 1, col: coordinates.col)
-            
-            if getNextPipePieceInDirection(nextCoordinates: nextCoordinates, pipeHeading: MapDirection.South, DEBUG: DEBUG) != nil {
-                return MapDirection.South
+            if nextPipePiece(from: nextCoordinates, heading: .south, debug: DEBUG) != nil {
+                return .south
             }
         }
         
@@ -164,46 +165,41 @@ struct Day10: AdventDay {
     }
     
     // If the direction is valid, return the pipe piece in that direction
-    func getNextPipePieceInDirection(nextCoordinates: MapCoordinate, pipeHeading: MapDirection, DEBUG: Bool) -> Optional<PipePiece> {
+    func nextPipePiece(from nextCoordinates: MapCoordinate, heading pipeHeading: MapDirection, debug: Bool = false) -> PipePiece? {
         
-        let nextChar = getPipeChar(coordinates: nextCoordinates)
+        let nextChar = pipeCharacter(at: nextCoordinates)
         
-        if let nextPipeDirection = getNextMapDirectionForChar(pipeChar: nextChar, nextPipeDirection: pipeHeading) {
+        if let nextPipeDirection = nextDirection(approaching: nextChar, heading: pipeHeading) {
             
-            let nextPipePiece = PipePiece(pipeChar: nextChar, coordinates: nextCoordinates, headingOfNextPipe: getOppositeDirection(direction: pipeHeading))
+            let nextPipePiece = PipePiece(pipeChar: nextChar, coordinates: nextCoordinates, headingOfNextPipe: pipeHeading.opposite)
             
-            if DEBUG {
+            if debug {
                 print("NextChar", nextChar, "Pipe Heading:", pipeHeading, "Next Direction:", nextPipeDirection)
             }
             
-            return Optional.some(nextPipePiece)
+            return nextPipePiece
         }
         
-        return Optional.none
+        return nil
     }
     
-    func getPipeChar(coordinates: MapCoordinate) -> Character {
-        
-        let pipeCharRow = entities[coordinates.row]
-        
-        let index = entities[coordinates.row].index(entities[coordinates.row].startIndex, offsetBy: coordinates.col)
-        
-        let pipeChar = pipeCharRow[index]
+    func pipeCharacter(at coordinates: MapCoordinate) -> Character {
+        let pipeChar = entities[coordinates.row][coordinates.col]
         
 //        print("Coords", coordinates, "Char:", pipeChar)
         
         return pipeChar
     }
     
-    func getNextCoordinatesInDirection(coordinates: MapCoordinate, pipeHeading: MapDirection) -> MapCoordinate {
+    func nextCoordinates(startingAt coordinates: MapCoordinate, heading pipeHeading: MapDirection) -> MapCoordinate {
         switch pipeHeading {
-        case MapDirection.North:
+        case .north:
             return MapCoordinate(row: coordinates.row - 1, col: coordinates.col)
-        case MapDirection.South:
+        case .south:
             return MapCoordinate(row: coordinates.row + 1, col: coordinates.col)
-        case MapDirection.East:
+        case .east:
             return MapCoordinate(row: coordinates.row, col: coordinates.col + 1)
-        case MapDirection.West:
+        case .west:
             return MapCoordinate(row: coordinates.row, col: coordinates.col - 1)
         }
     }
@@ -217,35 +213,35 @@ struct Day10: AdventDay {
         // All other characters are invalid
             
             // North
-        case (MapDirection.North, "|"):
+        case (.north, "|"):
             return true
-        case (MapDirection.North, "7"):
+        case (.north, "7"):
             return true
-        case (MapDirection.North, "F"):
+        case (.north, "F"):
             return true
             
             // South
-        case (MapDirection.South, "|"):
+        case (.south, "|"):
             return true
-        case (MapDirection.South, "L"):
+        case (.south, "L"):
             return true
-        case (MapDirection.South, "J"):
+        case (.south, "J"):
             return true
             
             // East
-        case (MapDirection.East, "-"):
+        case (.east, "-"):
             return true
-        case (MapDirection.East, "J"):
+        case (.east, "J"):
             return true
-        case (MapDirection.East, "7"):
+        case (.east, "7"):
             return true
             
             // West
-        case (MapDirection.West, "-"):
+        case (.west, "-"):
             return true
-        case (MapDirection.West, "L"):
+        case (.west, "L"):
             return true
-        case (MapDirection.West, "F"):
+        case (.west, "F"):
             return true
             
             // Any other cases are for invalid pipes
@@ -255,47 +251,33 @@ struct Day10: AdventDay {
         }
     }
     
-    func getOppositeDirection(direction: MapDirection) -> MapDirection {
-        // Used to attach the opposite direction based on from and to directions for PipePiece instances
-        switch direction {
-        case MapDirection.North:
-            return MapDirection.South
-        case MapDirection.South:
-            return MapDirection.North
-        case MapDirection.East:
-            return MapDirection.West
-        case MapDirection.West:
-            return MapDirection.East
-        }
-    }
-    
-    func getNextMapDirectionForChar(pipeChar: Character, nextPipeDirection: MapDirection) -> Optional<MapDirection> {
+    func nextDirection(approaching pipeChar: Character, heading nextPipeDirection: MapDirection) -> MapDirection? {
         
         // E.g. "J" If you're travelling TO the East then you are coming FROM the West so you must go North
         
         switch (nextPipeDirection, pipeChar) {
         
             // North cases
-        case (MapDirection.North, "|"), (MapDirection.West, "L"), (MapDirection.East, "J"):
-            return Optional.some(MapDirection.North)
+        case (.north, "|"), (.west, "L"), (.east, "J"):
+            return .north
             
             // South cases
-        case (MapDirection.South, "|"), (MapDirection.West, "F"), (MapDirection.East, "7"):
-            return Optional.some(MapDirection.South)
+        case (.south, "|"), (.west, "F"), (.east, "7"):
+            return .south
             
             // East cases
-        case (MapDirection.East, "-"), (MapDirection.South, "L"), (MapDirection.North, "F"):
-            return Optional.some(MapDirection.East)
+        case (.east, "-"), (.south, "L"), (.north, "F"):
+            return .east
             
             // West cases
-        case (MapDirection.West, "-"), (MapDirection.South, "J"), (MapDirection.North, "7"):
-            return Optional.some(MapDirection.West)
+        case (.west, "-"), (.south, "J"), (.north, "7"):
+            return .west
             
         case (let direction, "S"):
-            return Optional.some(direction)
+            return direction
             
         default:
-            return Optional.none
+            return nil
         }
     }
     

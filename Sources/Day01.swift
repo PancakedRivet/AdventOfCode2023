@@ -11,17 +11,15 @@ struct Day01: AdventDay {
     // Save your data in a corresponding text file in the `Data` directory.
     var data: String
     
-    var entities: [String] {
-        data.split(separator: "\n").map { String($0) }
+    var entities: [Substring] {
+        data.split(whereSeparator: { $0.isNewline })
     }
     
     func part1() -> Any {
         var coordinateValue = 0
-        var currentLineValue: String
         for line in entities {
-            let numbersInLine = line.parseToInt()
-            currentLineValue = String(numbersInLine.first!) + String(numbersInLine.last!)
-            coordinateValue += Int(currentLineValue)!
+            let numbersInLine = line.lazy.compactMap { $0.wholeNumberValue }
+            coordinateValue += 10 * numbersInLine.first! + numbersInLine.last!
         }
         return coordinateValue
     }
@@ -30,82 +28,62 @@ struct Day01: AdventDay {
         
         var coordinateValue = 0
         
-        var currentLineValue: String
-        var reversedLine: String
-        
-        var firstDigit: String
-        var lastDigit: String
-        
         for line in entities {
             
-            // Reset the strings to empty on each line
-            currentLineValue = ""
-            firstDigit = "0"
-            lastDigit = "0"
+            var firstDigit: Int?
+            var lastDigit: Int?
             
             // Search the line forwards
-            for char in line {
-                
-                currentLineValue += String(char)
-                
-                if Int(String(char)) != nil {
-                    firstDigit = String(char)
+            for (i, char) in zip(line.indices, line) {
+                if let number = char.wholeNumberValue {
+                    firstDigit = number
                     break
-                }
-                
-                if let stringNumber = checkIfNumberString(lineString: currentLineValue) {
+                } else if let stringNumber = parseNumberString(lineString: line[i...]) {
                     firstDigit = stringNumber
                     break
                 }
-                
             }
             
             // Search the line backwards
-            currentLineValue = ""
-            reversedLine = String(line.reversed())
-            for char in reversedLine {
-                
-                currentLineValue += String(char)
-                
-                if Int(String(char)) != nil {
-                    lastDigit = String(char)
+            for (i, char) in zip(line.indices, line).reversed() {
+                if let number = char.wholeNumberValue {
+                    lastDigit = number
                     break
-                }
-                
-                if let stringNumber = checkIfNumberString(lineString: String(currentLineValue.reversed())) {
+                } else if let stringNumber = parseNumberString(lineString: line[i...]) {
                     lastDigit = stringNumber
                     break
                 }
-                
             }
             
-            currentLineValue = firstDigit + lastDigit
-            coordinateValue += Int(currentLineValue)!
+            if let firstDigit = firstDigit, let lastDigit = lastDigit {
+                print("Found \(firstDigit), \(lastDigit)")
+                coordinateValue += firstDigit * 10 + lastDigit
+            }
         }
         return coordinateValue
     }
     
-    func checkIfNumberString(lineString: String) -> String? {
-        if lineString.contains("one") {
-            return "1"
-        } else if lineString.contains("two") {
-            return "2"
-        } else if lineString.contains("three") {
-            return "3"
-        } else if lineString.contains("four") {
-            return "4"
-        } else if lineString.contains("five") {
-            return "5"
-        } else if lineString.contains("six") {
-            return "6"
-        } else if lineString.contains("seven") {
-            return "7"
-        } else if lineString.contains("eight") {
-            return "8"
-        } else if lineString.contains("nine") {
-            return "9"
+    func parseNumberString(lineString: some StringProtocol) -> Int? {
+        return if lineString.hasPrefix("one") {
+            1
+        } else if lineString.hasPrefix("two") {
+            2
+        } else if lineString.hasPrefix("three") {
+            3
+        } else if lineString.hasPrefix("four") {
+            4
+        } else if lineString.hasPrefix("five") {
+            5
+        } else if lineString.hasPrefix("six") {
+            6
+        } else if lineString.hasPrefix("seven") {
+            7
+        } else if lineString.hasPrefix("eight") {
+            8
+        } else if lineString.hasPrefix("nine") {
+            9
+        } else {
+            nil
         }
-        
-        return nil
     }
 }
